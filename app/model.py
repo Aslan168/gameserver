@@ -25,7 +25,43 @@ class SafeUser(BaseModel):
     class Config:
         orm_mode = True
 
+#Enum
+class LiveDifficulty(Enum):
+    normal = 1
+    hard = 1
 
+class JoinRoomResult(Enum):
+    Ok = 1
+    RoomFull = 2
+    Disbanned = 3
+    OtherError = 4
+
+class WaitRoomStatus(Enum):
+    Waiting = 1
+    LiveStart = 2
+    Dissolution = 3
+
+#構造体
+class RoomInfo(BaseModel):
+    room_id: int
+    live_id: int
+    joined_user_count: int
+    max_user_count: int
+
+class RoomUser(BaseModel):
+    user_id: int
+    name: str
+    leader_card_id: int
+    select_difficulty: LiveDifficulty
+    is_me: bool
+    is_host:bool
+
+class ResultUser(BaseModel):
+    user_id: int
+    judge_count_list: list[int]
+    score: int
+
+#user関連
 def create_user(name: str, leader_card_id: int) -> str:
     """Create new user and returns their token"""
     token = str(uuid.uuid4())
@@ -69,7 +105,16 @@ def update_user(token: str, name: str, leader_card_id: int) -> None:
             ),
             {"name": name, "token": token, "leader_card_id": leader_card_id},
         )
-    return
+    return None
+
+def create_room(token: str, live_id: int, select_difficulty: LiveDifficulty):
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO `room` (live_id) VALUES (:live_id)"
+            ),
+            {"live_id": live_id},
+        )
 
 
 """
