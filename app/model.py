@@ -140,6 +140,24 @@ def create_room(token: str, live_id: int, select_difficulty: LiveDifficulty) -> 
         return room_id
 
 
+def get_room_list(token: str, live_id: int):
+    with engine.begin() as conn:
+        if live_id == 0:
+            res = conn.execute(
+                text(
+                    "SELECT room_id, live_id, joined_user_count, max_user_count FROM room"
+                ),
+            )
+        else:
+            res = conn.execute(
+                text(
+                    "SELECT room_id, live_id, joined_user_count, max_user_count FROM room WHERE live_id= :live_id"
+                ),
+                {"live_id": live_id},
+            )
+        return res.all()
+
+
 """
 
 from sqlalchemy import *
