@@ -24,7 +24,7 @@ CREATE TABLE `room_member` (
   `room_id` int DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
   `leader_card_id` int DEFAULT NULL,
-  `select_difficulty` int DEFAULT NULL,
+  `select_difficulty` int DEFAULT 1,
   `is_me` boolean DEFAULT NULL,
   `is_host` boolean DEFAULT NULL,
   PRIMARY KEY (`user_id`)

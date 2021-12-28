@@ -28,7 +28,7 @@ class SafeUser(BaseModel):
 #Enum
 class LiveDifficulty(Enum):
     normal = 1
-    hard = 1
+    hard = 2
 
 class JoinRoomResult(Enum):
     Ok = 1
@@ -107,14 +107,26 @@ def update_user(token: str, name: str, leader_card_id: int) -> None:
         )
     return None
 
-def create_room(token: str, live_id: int, select_difficulty: LiveDifficulty):
+def create_room(token: str, live_id: int, select_difficulty: LiveDifficulty) -> int:
     with engine.begin() as conn:
-        conn.execute(
+        res = conn.execute(
             text(
                 "INSERT INTO `room` (live_id) VALUES (:live_id)"
             ),
             {"live_id": live_id},
         )
+        room_id = res.lastrowid
+        User = get_user_by_token(token)
+        res = conn.execute(
+            text(
+                "REPLACE INTO `room_member` (room_id, name, leader_card_id, select_difficulty, is_me, is_host)\
+                 VALUES (:room_id, :name, :leader_card_id, :select_difficulty, :is_me, :is_host)"
+            ),
+            {"room_id": room_id, "name": User.name, "leader_card_id": User.leader_card_id, \
+             "select_difficulty": select_difficulty.value, "is_me": True, "is_host" : True},
+        )
+        return room_id
+        
 
 
 """
