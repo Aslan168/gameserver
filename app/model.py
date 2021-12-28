@@ -25,10 +25,12 @@ class SafeUser(BaseModel):
     class Config:
         orm_mode = True
 
-#Enum
+
+# Enum
 class LiveDifficulty(Enum):
     normal = 1
     hard = 2
+
 
 class JoinRoomResult(Enum):
     Ok = 1
@@ -36,17 +38,20 @@ class JoinRoomResult(Enum):
     Disbanned = 3
     OtherError = 4
 
+
 class WaitRoomStatus(Enum):
     Waiting = 1
     LiveStart = 2
     Dissolution = 3
 
-#構造体
+
+# 構造体
 class RoomInfo(BaseModel):
     room_id: int
     live_id: int
     joined_user_count: int
     max_user_count: int
+
 
 class RoomUser(BaseModel):
     user_id: int
@@ -54,14 +59,16 @@ class RoomUser(BaseModel):
     leader_card_id: int
     select_difficulty: LiveDifficulty
     is_me: bool
-    is_host:bool
+    is_host: bool
+
 
 class ResultUser(BaseModel):
     user_id: int
     judge_count_list: list[int]
     score: int
 
-#user関連
+
+# user関連
 def create_user(name: str, leader_card_id: int) -> str:
     """Create new user and returns their token"""
     token = str(uuid.uuid4())
@@ -107,12 +114,11 @@ def update_user(token: str, name: str, leader_card_id: int) -> None:
         )
     return None
 
+
 def create_room(token: str, live_id: int, select_difficulty: LiveDifficulty) -> int:
     with engine.begin() as conn:
         res = conn.execute(
-            text(
-                "INSERT INTO `room` (live_id) VALUES (:live_id)"
-            ),
+            text("INSERT INTO `room` (live_id) VALUES (:live_id)"),
             {"live_id": live_id},
         )
         room_id = res.lastrowid
@@ -122,11 +128,16 @@ def create_room(token: str, live_id: int, select_difficulty: LiveDifficulty) -> 
                 "REPLACE INTO `room_member` (room_id, name, leader_card_id, select_difficulty, is_me, is_host)\
                  VALUES (:room_id, :name, :leader_card_id, :select_difficulty, :is_me, :is_host)"
             ),
-            {"room_id": room_id, "name": User.name, "leader_card_id": User.leader_card_id, \
-             "select_difficulty": select_difficulty.value, "is_me": True, "is_host" : True},
+            {
+                "room_id": room_id,
+                "name": User.name,
+                "leader_card_id": User.leader_card_id,
+                "select_difficulty": select_difficulty.value,
+                "is_me": True,
+                "is_host": True,
+            },
         )
         return room_id
-        
 
 
 """

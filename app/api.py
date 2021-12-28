@@ -28,9 +28,11 @@ class UserCreateRequest(BaseModel):
 class UserCreateResponse(BaseModel):
     user_token: str
 
+
 class RoomCreateRequest(BaseModel):
     live_id: int
     select_difficulty: LiveDifficulty
+
 
 class RoomCreateResponse(BaseModel):
     room_id: int
@@ -78,5 +80,4 @@ def update(req: UserCreateRequest, token: str = Depends(get_auth_token)):
 def room_create(req: RoomCreateRequest, token: str = Depends(get_auth_token)):
     """Create Romm for multiplay"""
     room_id = model.create_room(token, req.live_id, req.select_difficulty)
-    return RoomCreateResponse(room_id = room_id)
-
+    return RoomCreateResponse(room_id=room_id)
