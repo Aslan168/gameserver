@@ -125,10 +125,11 @@ def create_room(token: str, live_id: int, select_difficulty: LiveDifficulty) -> 
         User = get_user_by_token(token)
         res = conn.execute(
             text(
-                "INSERT INTO `room_member` (room_id, name, leader_card_id, select_difficulty, is_me, is_host)\
-                 VALUES (:room_id, :name, :leader_card_id, :select_difficulty, :is_me, :is_host)"
+                "REPLACE INTO `room_member` (user_id, room_id, name, leader_card_id, select_difficulty, is_me, is_host)\
+                 VALUES (:user_id, :room_id, :name, :leader_card_id, :select_difficulty, :is_me, :is_host)"
             ),
             {
+                "user_id": User.id,
                 "room_id": room_id,
                 "name": User.name,
                 "leader_card_id": User.leader_card_id,
@@ -176,13 +177,16 @@ def join_room(token: str, room_id: int, select_difficulty: LiveDifficulty):
                         "UPDATE room SET joined_user_count=:joined_user_count WHERE room_id=:room_id"
                     ),
                     {"joined_user_count": joined_user_count+1, "room_id": room_id},
+                    #TODO
+                    #room_memberを検索してその人数にした方が安全かも(1人で複数回joinした時の対応)
                 )
                 res = conn.execute(
                     text(
-                        "INSERT INTO `room_member` (room_id, name, leader_card_id, select_difficulty, is_me, is_host)\
-                        VALUES (:room_id, :name, :leader_card_id, :select_difficulty, :is_me, :is_host)"
+                        "REPLACE INTO `room_member` (user_id, room_id, name, leader_card_id, select_difficulty, is_me, is_host)\
+                        VALUES (:user_id, :room_id, :name, :leader_card_id, :select_difficulty, :is_me, :is_host)"
                     ),
                     {
+                        "user_id": User.id,
                         "room_id": room_id,
                         "name": User.name,
                         "leader_card_id": User.leader_card_id,
@@ -197,6 +201,23 @@ def join_room(token: str, room_id: int, select_difficulty: LiveDifficulty):
         except:
             return JoinRoomResult(4)
 
+
+def wait_room():
+    with engine.begin() as conn:
+        res = conn.execute(
+            text(
+                "SELECT room_status FROM room WHERE room_id=:room_id"
+            ),
+            {"room_id": room_id},
+        )
+        status = res.one()
+        res = conn.execute(
+            text(
+                "SELECT user_id, name, leader_card_id, select_difficulty, is_me, is_host\
+                 FROM room_member WHERE room_id=:room_id"
+            ),
+            {"room_id": room_id},
+        )
 
 """
 
