@@ -125,7 +125,7 @@ def create_room(token: str, live_id: int, select_difficulty: LiveDifficulty) -> 
         User = get_user_by_token(token)
         res = conn.execute(
             text(
-                "REPLACE INTO `room_member` (room_id, name, leader_card_id, select_difficulty, is_me, is_host)\
+                "INSERT INTO `room_member` (room_id, name, leader_card_id, select_difficulty, is_me, is_host)\
                  VALUES (:room_id, :name, :leader_card_id, :select_difficulty, :is_me, :is_host)"
             ),
             {
@@ -137,6 +137,7 @@ def create_room(token: str, live_id: int, select_difficulty: LiveDifficulty) -> 
                 "is_host": True,
             },
         )
+        
         return room_id
 
 
@@ -156,6 +157,45 @@ def get_room_list(token: str, live_id: int):
                 {"live_id": live_id},
             )
         return res.all()
+
+
+def join_room(token: str, room_id: int, select_difficulty: LiveDifficulty):
+    with engine.begin() as conn:
+        res = conn.execute(
+            text(
+                "SELECT joined_user_count, max_user_count FROM room WHERE room_id=:room_id"
+            ),
+            {"room_id": room_id},
+        )
+        try:
+            joined_user_count, max_user_count = res.one()
+            User = get_user_by_token(token)
+            if(joined_user_count < max_user_count): #定員より少なければ
+                res = conn.execute(
+                    text(
+                        "UPDATE room SET joined_user_count=:joined_user_count WHERE room_id=:room_id"
+                    ),
+                    {"joined_user_count": joined_user_count+1, "room_id": room_id},
+                )
+                res = conn.execute(
+                    text(
+                        "INSERT INTO `room_member` (room_id, name, leader_card_id, select_difficulty, is_me, is_host)\
+                        VALUES (:room_id, :name, :leader_card_id, :select_difficulty, :is_me, :is_host)"
+                    ),
+                    {
+                        "room_id": room_id,
+                        "name": User.name,
+                        "leader_card_id": User.leader_card_id,
+                        "select_difficulty": select_difficulty.value,
+                        "is_me": True,
+                        "is_host": False,
+                    },
+                )
+                return JoinRoomResult(1)
+            else:
+                return JoinRoomResult(2)
+        except:
+            return JoinRoomResult(4)
 
 
 """
