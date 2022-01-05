@@ -34,6 +34,5 @@ CREATE TABLE `room_member` (
   `score_good` int DEFAULT NULL,
   `score_bad` int DEFAULT NULL,
   `score_miss` int DEFAULT NULL,
-  PRIMARY KEY (`room_id`, `user_id`),
-  UNIQUE KEY `user_id` (`user_id`)
+  PRIMARY KEY (`room_id`, `user_id`)
 );

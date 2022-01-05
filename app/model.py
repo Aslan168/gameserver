@@ -171,12 +171,18 @@ def join_room(token: str, room_id: int, select_difficulty: LiveDifficulty):
     with engine.begin() as conn:
         res = conn.execute(
             text(
-                "SELECT joined_user_count, max_user_count FROM room WHERE room_id=:room_id"
+                "SELECT joined_user_count, max_user_count, room_status FROM room WHERE room_id=:room_id"
             ),
             {"room_id": room_id},
         )
         try:
-            joined_user_count, max_user_count = res.one()
+            joined_user_count, max_user_count, room_status = res.one()
+            #ゲーム中/解散済みを確認
+            if room_status == 2:
+                return 4
+            elif room_status == 3:
+                return 3
+            
             User = get_user_by_token(token)
             if joined_user_count < max_user_count:  # 定員より少なければ
                 res = conn.execute(
@@ -269,6 +275,7 @@ def end_room(token: str, room_id: int, judge_count_list: list[int], score: int):
 def result_room(token: str, room_id: int):
     # TODO
     with engine.begin() as conn:
+        User = get_user_by_token(token)
         res = conn.execute(
             text(
                 "SELECT user_id, score_perfect, score_great, score_good, score_bad, score_miss, score\
@@ -291,7 +298,13 @@ def result_room(token: str, room_id: int):
                     score=score_list[6],
                 )
             )
-
+        
+        res = conn.execute(
+            text(
+                "UPDATE room SET room_status = 3 WHERE room_id = :room_id"
+            ),
+            {"room_id": room_id},
+        )
         if can_return_result:
             return result_user_list
         else:
@@ -306,9 +319,6 @@ def leave_room(token: str, room_id: int):
             text("DELETE from room_member WHERE user_id=:user_id AND room_id=:room_id"),
             {"user_id": User.id, "room_id": room_id},
         )
-        # TODO
-        # 人数の更新
-        # 0人で解散
         res = conn.execute(
             text("SELECT count(user_id) from room_member WHERE room_id = :room_id"),
             {"room_id": room_id},
@@ -316,10 +326,11 @@ def leave_room(token: str, room_id: int):
         joined_user_count = res.one()[0]
         if joined_user_count == 0:
             res = conn.execute(
-                text("UPDATE room\
-                    SET joined_user_count = :joined_user_count, \
-                        room_status = 3\
-                    WHERE room_id = :room_id"),
+                #text("UPDATE room\
+                #    SET joined_user_count = :joined_user_count, \
+                #        room_status = 3\
+                #    WHERE room_id = :room_id"),
+                text("DELETE from room WHERE room_id = :room_id"),
                 {
                     "joined_user_count": joined_user_count,
                     "room_id": room_id
