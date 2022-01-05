@@ -270,7 +270,7 @@ def result_room(token: str, room_id: int):
         )
         result_user_list_nonarranged = res.all()
         result_user_list = []
-        can_return_result = True  # スコアヲ返却できるか
+        can_return_result = True  # スコアを返却できるか
 
         for score_list in result_user_list_nonarranged:
             if None in score_list:  # スコアが未送信の人がいないかチェック
@@ -288,6 +288,20 @@ def result_room(token: str, room_id: int):
             return result_user_list
         else:
             return []
+
+
+def leave_room(token: str, room_id: int):
+    # TODO
+    with engine.begin() as conn:
+        User = get_user_by_token(token)
+        res = conn.execute(
+            text("DELETE from room_member WHERE user_id=:user_id AND room_id=:room_id"),
+            {"user_id": User.id, "room_id": room_id},
+        )
+        # TODO
+        # 人数の更新
+
+        return
 
 
 """

@@ -90,6 +90,10 @@ class RoomResultResponse(BaseModel):
     result_user_list: list[ResultUser]
 
 
+class RoomLeaveRequest(BaseModel):
+    room_id: int
+
+
 @app.post("/user/create", response_model=UserCreateResponse)
 def user_create(req: UserCreateRequest):
     """新規ユーザー作成"""
@@ -175,3 +179,10 @@ def room_result(req: RoomResultRequest, token: str = Depends(get_auth_token)):
     """Show room list"""
     result_user_list = model.result_room(token, req.room_id)
     return RoomResultResponse(result_user_list=result_user_list)
+
+
+@app.post("/room/leave", response_model=Empty)
+def room_leave(req: RoomLeaveRequest, token: str = Depends(get_auth_token)):
+    """Show room list"""
+    model.leave_room(token, req.room_id)
+    return {}
