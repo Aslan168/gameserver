@@ -1,3 +1,10 @@
+#TODO
+#roomの人数が0の時、非表示にする（返さない？）
+
+#FIXED
+#人数更新ができるようになった
+
+
 import json
 import uuid
 from enum import Enum, IntEnum
@@ -173,12 +180,13 @@ def join_room(token: str, room_id: int, select_difficulty: LiveDifficulty):
             User = get_user_by_token(token)
             if joined_user_count < max_user_count:  # 定員より少なければ
                 res = conn.execute(
-                    text(
-                        "UPDATE room SET joined_user_count=:joined_user_count WHERE room_id=:room_id"
-                    ),
-                    {"joined_user_count": joined_user_count + 1, "room_id": room_id},
-                    # TODO
-                    # room_memberを検索してその人数にした方が安全かも(1人で複数回joinした時の対応)
+                    text("UPDATE room\
+                        SET joined_user_count = :joined_user_count \
+                        WHERE room_id = :room_id"),
+                    {
+                        "joined_user_count": joined_user_count,
+                        "room_id": room_id
+                    },
                 )
                 res = conn.execute(
                     text(
@@ -300,7 +308,33 @@ def leave_room(token: str, room_id: int):
         )
         # TODO
         # 人数の更新
-
+        # 0人で解散
+        res = conn.execute(
+            text("SELECT count(user_id) from room_member WHERE room_id = :room_id"),
+            {"room_id": room_id},
+        )
+        joined_user_count = res.one()[0]
+        if joined_user_count == 0:
+            res = conn.execute(
+                text("UPDATE room\
+                    SET joined_user_count = :joined_user_count, \
+                        room_status = 3\
+                    WHERE room_id = :room_id"),
+                {
+                    "joined_user_count": joined_user_count,
+                    "room_id": room_id
+                },
+            )
+        else:
+            res = conn.execute(
+                text("UPDATE room\
+                    SET joined_user_count = :joined_user_count \
+                    WHERE room_id = :room_id"),
+                {
+                    "joined_user_count": joined_user_count,
+                    "room_id": room_id
+                },
+            )
         return
 
 
