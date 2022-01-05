@@ -138,7 +138,7 @@ def create_room(token: str, live_id: int, select_difficulty: LiveDifficulty) -> 
                 "is_host": True,
             },
         )
-        
+
         return room_id
 
 
@@ -171,14 +171,14 @@ def join_room(token: str, room_id: int, select_difficulty: LiveDifficulty):
         try:
             joined_user_count, max_user_count = res.one()
             User = get_user_by_token(token)
-            if(joined_user_count < max_user_count): #定員より少なければ
+            if joined_user_count < max_user_count:  # 定員より少なければ
                 res = conn.execute(
                     text(
                         "UPDATE room SET joined_user_count=:joined_user_count WHERE room_id=:room_id"
                     ),
-                    {"joined_user_count": joined_user_count+1, "room_id": room_id},
-                    #TODO
-                    #room_memberを検索してその人数にした方が安全かも(1人で複数回joinした時の対応)
+                    {"joined_user_count": joined_user_count + 1, "room_id": room_id},
+                    # TODO
+                    # room_memberを検索してその人数にした方が安全かも(1人で複数回joinした時の対応)
                 )
                 res = conn.execute(
                     text(
@@ -202,15 +202,13 @@ def join_room(token: str, room_id: int, select_difficulty: LiveDifficulty):
             return JoinRoomResult(4)
 
 
-def wait_room():
+def wait_room(token: str, room_id: int):
     with engine.begin() as conn:
         res = conn.execute(
-            text(
-                "SELECT room_status FROM room WHERE room_id=:room_id"
-            ),
+            text("SELECT room_status FROM room WHERE room_id=:room_id"),
             {"room_id": room_id},
         )
-        status = res.one()
+        status = res.one()[0]
         res = conn.execute(
             text(
                 "SELECT user_id, name, leader_card_id, select_difficulty, is_me, is_host\
@@ -218,6 +216,9 @@ def wait_room():
             ),
             {"room_id": room_id},
         )
+        room_user_list = res.all()
+    return (status, room_user_list)
+
 
 """
 
