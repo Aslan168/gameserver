@@ -221,13 +221,11 @@ def wait_room(token: str, room_id: int):
 
 
 def start_room(token: str, room_id: int):
-    #TODO
-    #オーナーかどうかのチェック
+    # TODO
+    # オーナーかどうかのチェック
     with engine.begin() as conn:
         res = conn.execute(
-            text(
-                "UPDATE room SET room_status = 2 WHERE room_id=:room_id"
-            ),
+            text("UPDATE room SET room_status = 2 WHERE room_id=:room_id"),
             {"room_id": room_id},
         )
         return
@@ -258,7 +256,40 @@ def end_room(token: str, room_id: int, judge_count_list: list[int], score: int):
             },
         )
         return
-  
+
+
+def result_room(token: str, room_id: int):
+    # TODO
+    with engine.begin() as conn:
+        res = conn.execute(
+            text(
+                "SELECT user_id, score_perfect, score_great, score_good, score_bad, score_miss, score\
+                FROM room_member WHERE room_id = :room_id"
+            ),
+            {"room_id": room_id},
+        )
+        result_user_list_nonarranged = res.all()
+        result_user_list = []
+        can_return_result = True  # スコアヲ返却できるか
+
+        for score_list in result_user_list_nonarranged:
+            if None in score_list:  # スコアが未送信の人がいないかチェック
+                can_return_result = False
+                break
+            result_user_list.append(
+                ResultUser(
+                    user_id=score_list[0],
+                    judge_count_list=score_list[1:6],
+                    score=score_list[6],
+                )
+            )
+
+        if can_return_result:
+            return result_user_list
+        else:
+            return []
+
+
 """
 
 from sqlalchemy import *

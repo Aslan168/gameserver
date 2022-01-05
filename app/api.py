@@ -8,6 +8,7 @@ from . import model
 from .model import (
     JoinRoomResult,
     LiveDifficulty,
+    ResultUser,
     RoomInfo,
     RoomUser,
     SafeUser,
@@ -81,6 +82,14 @@ class RoomEndRequest(BaseModel):
     score: int
 
 
+class RoomResultRequest(BaseModel):
+    room_id: int
+
+
+class RoomResultResponse(BaseModel):
+    result_user_list: list[ResultUser]
+
+
 @app.post("/user/create", response_model=UserCreateResponse)
 def user_create(req: UserCreateRequest):
     """新規ユーザー作成"""
@@ -146,14 +155,23 @@ def room_wait(req: RoomWaitRequest, token: str = Depends(get_auth_token)):
     (status, room_user_list) = model.wait_room(token, req.room_id)
     return RoomWaitResponse(status=status, room_user_list=room_user_list)
 
+
 @app.post("/room/start", response_model=Empty)
 def room_start(req: RoomStartRequest, token: str = Depends(get_auth_token)):
     """Show room list"""
     model.start_room(token, req.room_id)
     return {}
 
+
 @app.post("/room/end", response_model=Empty)
 def room_end(req: RoomEndRequest, token: str = Depends(get_auth_token)):
     """Show room list"""
     model.end_room(token, req.room_id, req.judge_count_list, req.score)
     return {}
+
+
+@app.post("/room/result", response_model=RoomResultResponse)
+def room_result(req: RoomResultRequest, token: str = Depends(get_auth_token)):
+    """Show room list"""
+    result_user_list = model.result_room(token, req.room_id)
+    return RoomResultResponse(result_user_list=result_user_list)
