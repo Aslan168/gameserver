@@ -231,7 +231,34 @@ def start_room(token: str, room_id: int):
             {"room_id": room_id},
         )
         return
-    
+
+
+def end_room(token: str, room_id: int, judge_count_list: list[int], score: int):
+    with engine.begin() as conn:
+        User = get_user_by_token(token)
+        res = conn.execute(
+            text(
+                "UPDATE room_member \
+                SET score = :score, \
+                score_perfect= :score_perfect, \
+                score_great= :score_great, \
+                score_good= :score_good, \
+                score_bad= :score_bad, \
+                score_miss= :score_miss \
+                WHERE user_id=:user_id"
+            ),
+            {
+                "user_id": User.id,
+                "score": score,
+                "score_perfect": judge_count_list[0],
+                "score_great": judge_count_list[1],
+                "score_good": judge_count_list[2],
+                "score_bad": judge_count_list[3],
+                "score_miss": judge_count_list[4],
+            },
+        )
+        return
+  
 """
 
 from sqlalchemy import *

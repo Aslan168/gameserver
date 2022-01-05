@@ -28,6 +28,12 @@ CREATE TABLE `room_member` (
   `select_difficulty` int DEFAULT 1,
   `is_me` boolean DEFAULT NULL,
   `is_host` boolean DEFAULT NULL,
+  `score` int DEFAULT NULL,
+  `score_perfect` int DEFAULT NULL,
+  `score_great` int DEFAULT NULL,
+  `score_good` int DEFAULT NULL,
+  `score_bad` int DEFAULT NULL,
+  `score_miss` int DEFAULT NULL,
   PRIMARY KEY (`room_id`, `user_id`),
   UNIQUE KEY `user_id` (`user_id`)
 );

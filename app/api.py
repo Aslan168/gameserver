@@ -75,6 +75,12 @@ class RoomStartRequest(BaseModel):
     room_id: int
 
 
+class RoomEndRequest(BaseModel):
+    room_id: int
+    judge_count_list: list[int]
+    score: int
+
+
 @app.post("/user/create", response_model=UserCreateResponse)
 def user_create(req: UserCreateRequest):
     """新規ユーザー作成"""
@@ -146,3 +152,8 @@ def room_start(req: RoomStartRequest, token: str = Depends(get_auth_token)):
     model.start_room(token, req.room_id)
     return {}
 
+@app.post("/room/end", response_model=Empty)
+def room_end(req: RoomEndRequest, token: str = Depends(get_auth_token)):
+    """Show room list"""
+    model.end_room(token, req.room_id, req.judge_count_list, req.score)
+    return {}
