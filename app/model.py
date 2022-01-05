@@ -220,6 +220,18 @@ def wait_room(token: str, room_id: int):
     return (status, room_user_list)
 
 
+def start_room(token: str, room_id: int):
+    #TODO
+    #オーナーかどうかのチェック
+    with engine.begin() as conn:
+        res = conn.execute(
+            text(
+                "UPDATE room SET room_status = 2 WHERE room_id=:room_id"
+            ),
+            {"room_id": room_id},
+        )
+        return
+    
 """
 
 from sqlalchemy import *

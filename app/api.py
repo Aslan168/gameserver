@@ -71,6 +71,10 @@ class RoomWaitResponse(BaseModel):
     room_user_list: list[RoomUser]
 
 
+class RoomStartRequest(BaseModel):
+    room_id: int
+
+
 @app.post("/user/create", response_model=UserCreateResponse)
 def user_create(req: UserCreateRequest):
     """新規ユーザー作成"""
@@ -135,3 +139,10 @@ def room_wait(req: RoomWaitRequest, token: str = Depends(get_auth_token)):
     """Show room list"""
     (status, room_user_list) = model.wait_room(token, req.room_id)
     return RoomWaitResponse(status=status, room_user_list=room_user_list)
+
+@app.post("/room/start", response_model=Empty)
+def room_start(req: RoomStartRequest, token: str = Depends(get_auth_token)):
+    """Show room list"""
+    model.start_room(token, req.room_id)
+    return {}
+
