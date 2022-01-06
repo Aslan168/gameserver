@@ -339,6 +339,11 @@ def leave_room(token: str, room_id: int):
     with engine.begin() as conn:
         User = get_user_by_token(token)
         res = conn.execute(
+            text("SELECT is_host from room_member WHERE user_id=:user_id AND room_id=:room_id"),
+            {"user_id": User.id, "room_id": room_id},
+        )
+        is_host = res.one()[0]
+        res = conn.execute(
             text("DELETE from room_member WHERE user_id=:user_id AND room_id=:room_id"),
             {"user_id": User.id, "room_id": room_id},
         )
@@ -369,6 +374,22 @@ def leave_room(token: str, room_id: int):
                     "room_id": room_id
                 },
             )
+            if is_host:
+                res = conn.execute(
+                    text("SELECT user_id from room_member WHERE room_id = :room_id"),
+                    {"room_id": room_id},
+                )   
+                # オーナー変更
+                next_host_user_id = res.all()[0][0]
+                res = conn.execute(
+                    text("UPDATE room_member\
+                        SET is_host = 1 \
+                        WHERE room_id = :room_id AND user_id = :user_id"),
+                    {
+                        "room_id": room_id,
+                        "user_id": next_host_user_id,
+                    },
+                )   
         return
 
 
