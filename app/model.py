@@ -224,6 +224,7 @@ def join_room(token: str, room_id: int, select_difficulty: LiveDifficulty):
 
 def wait_room(token: str, room_id: int):
     with engine.begin() as conn:
+        User = get_user_by_token(token)
         res = conn.execute(
             text("SELECT room_status FROM room WHERE room_id=:room_id"),
             {"room_id": room_id},
@@ -236,7 +237,23 @@ def wait_room(token: str, room_id: int):
             ),
             {"room_id": room_id},
         )
-        room_user_list = res.all()
+        room_user_list = []
+        room_user_list_nonarranged = res.all()
+        for room_user in room_user_list_nonarranged:
+            #is_meチェック
+            if(room_user[0] != User.id):
+                room_user = list(room_user)
+                room_user[4] = 0
+            room_user_list.append(
+                RoomUser(
+                    user_id = room_user[0],
+                    name = room_user[1],
+                    leader_card_id = room_user[2],
+                    select_difficulty = room_user[3],
+                    is_me =room_user[4],
+                    is_host = room_user[5],
+                )
+            )
     return (status, room_user_list)
 
 
