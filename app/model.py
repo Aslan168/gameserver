@@ -154,17 +154,23 @@ def get_room_list(token: str, live_id: int):
         if live_id == 0:
             res = conn.execute(
                 text(
-                    "SELECT room_id, live_id, joined_user_count, max_user_count FROM room"
+                    "SELECT room_id, live_id, joined_user_count, max_user_count FROM room WHERE room_status = 1"
                 ),
             )
         else:
             res = conn.execute(
                 text(
-                    "SELECT room_id, live_id, joined_user_count, max_user_count FROM room WHERE live_id= :live_id"
+                    "SELECT room_id, live_id, joined_user_count, max_user_count FROM room WHERE live_id= :live_id AND room_status = 1"
                 ),
                 {"live_id": live_id},
             )
-        return res.all()
+        print("here")
+        print(res)
+        try:
+            res = res.all()
+            return res
+        except:
+            return []
 
 
 def join_room(token: str, room_id: int, select_difficulty: LiveDifficulty):
