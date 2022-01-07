@@ -1,8 +1,8 @@
-#TODO
-#roomの人数が0の時、非表示にする（返さない？）
+# TODO
+# roomの人数が0の時、非表示にする（返さない？）
 
-#FIXED
-#人数更新ができるようになった
+# FIXED
+# 人数更新ができるようになった
 
 
 import json
@@ -183,22 +183,21 @@ def join_room(token: str, room_id: int, select_difficulty: LiveDifficulty):
         )
         try:
             joined_user_count, max_user_count, room_status = res.one()
-            #ゲーム中/解散済みを確認
+            # ゲーム中/解散済みを確認
             if room_status == 2:
                 return 4
             elif room_status == 3:
                 return 3
-            
+
             User = get_user_by_token(token)
             if joined_user_count < max_user_count:  # 定員より少なければ
                 res = conn.execute(
-                    text("UPDATE room\
+                    text(
+                        "UPDATE room\
                         SET joined_user_count = :joined_user_count \
-                        WHERE room_id = :room_id"),
-                    {
-                        "joined_user_count": joined_user_count,
-                        "room_id": room_id
-                    },
+                        WHERE room_id = :room_id"
+                    ),
+                    {"joined_user_count": joined_user_count, "room_id": room_id},
                 )
                 res = conn.execute(
                     text(
@@ -240,18 +239,18 @@ def wait_room(token: str, room_id: int):
         room_user_list = []
         room_user_list_nonarranged = res.all()
         for room_user in room_user_list_nonarranged:
-            #is_meチェック
-            if(room_user[0] != User.id):
+            # is_meチェック
+            if room_user[0] != User.id:
                 room_user = list(room_user)
                 room_user[4] = 0
             room_user_list.append(
                 RoomUser(
-                    user_id = room_user[0],
-                    name = room_user[1],
-                    leader_card_id = room_user[2],
-                    select_difficulty = room_user[3],
-                    is_me =room_user[4],
-                    is_host = room_user[5],
+                    user_id=room_user[0],
+                    name=room_user[1],
+                    leader_card_id=room_user[2],
+                    select_difficulty=room_user[3],
+                    is_me=room_user[4],
+                    is_host=room_user[5],
                 )
             )
     return (status, room_user_list)
@@ -267,12 +266,9 @@ def start_room(token: str, room_id: int):
                 "SELECT is_host\
                 FROM room_member WHERE room_id = :room_id AND user_id=:user_id"
             ),
-            {
-                "room_id": room_id,
-                "user_id": User.id
-            },
+            {"room_id": room_id, "user_id": User.id},
         )
-        #もしホストでないならば
+        # もしホストでないならば
         is_host = res.one()[0]
         if is_host == False:
             return
@@ -336,11 +332,9 @@ def result_room(token: str, room_id: int):
                     score=score_list[6],
                 )
             )
-        
+
         res = conn.execute(
-            text(
-                "UPDATE room SET room_status = 3 WHERE room_id = :room_id"
-            ),
+            text("UPDATE room SET room_status = 3 WHERE room_id = :room_id"),
             {"room_id": room_id},
         )
         if can_return_result:
@@ -354,7 +348,9 @@ def leave_room(token: str, room_id: int):
     with engine.begin() as conn:
         User = get_user_by_token(token)
         res = conn.execute(
-            text("SELECT is_host from room_member WHERE user_id=:user_id AND room_id=:room_id"),
+            text(
+                "SELECT is_host from room_member WHERE user_id=:user_id AND room_id=:room_id"
+            ),
             {"user_id": User.id, "room_id": room_id},
         )
         is_host = res.one()[0]
@@ -369,42 +365,40 @@ def leave_room(token: str, room_id: int):
         joined_user_count = res.one()[0]
         if joined_user_count == 0:
             res = conn.execute(
-                #text("UPDATE room\
+                # text("UPDATE room\
                 #    SET joined_user_count = :joined_user_count, \
                 #        room_status = 3\
                 #    WHERE room_id = :room_id"),
                 text("DELETE from room WHERE room_id = :room_id"),
-                {
-                    "joined_user_count": joined_user_count,
-                    "room_id": room_id
-                },
+                {"joined_user_count": joined_user_count, "room_id": room_id},
             )
         else:
             res = conn.execute(
-                text("UPDATE room\
+                text(
+                    "UPDATE room\
                     SET joined_user_count = :joined_user_count \
-                    WHERE room_id = :room_id"),
-                {
-                    "joined_user_count": joined_user_count,
-                    "room_id": room_id
-                },
+                    WHERE room_id = :room_id"
+                ),
+                {"joined_user_count": joined_user_count, "room_id": room_id},
             )
             if is_host:
                 res = conn.execute(
                     text("SELECT user_id from room_member WHERE room_id = :room_id"),
                     {"room_id": room_id},
-                )   
+                )
                 # オーナー変更
                 next_host_user_id = res.all()[0][0]
                 res = conn.execute(
-                    text("UPDATE room_member\
+                    text(
+                        "UPDATE room_member\
                         SET is_host = 1 \
-                        WHERE room_id = :room_id AND user_id = :user_id"),
+                        WHERE room_id = :room_id AND user_id = :user_id"
+                    ),
                     {
                         "room_id": room_id,
                         "user_id": next_host_user_id,
                     },
-                )   
+                )
         return
 
 
