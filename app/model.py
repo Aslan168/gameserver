@@ -261,6 +261,21 @@ def start_room(token: str, room_id: int):
     # TODO
     # オーナーかどうかのチェック
     with engine.begin() as conn:
+        User = get_user_by_token(token)
+        res = conn.execute(
+            text(
+                "SELECT is_host\
+                FROM room_member WHERE room_id = :room_id AND user_id=:user_id"
+            ),
+            {
+                "room_id": room_id,
+                "user_id": User.id
+            },
+        )
+        #もしホストでないならば
+        is_host = res.one()[0]
+        if is_host == False:
+            return
         res = conn.execute(
             text("UPDATE room SET room_status = 2 WHERE room_id=:room_id"),
             {"room_id": room_id},
